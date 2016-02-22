@@ -1,5 +1,5 @@
-# daemo-forum
-The Daemo Forums is a custom installation of [Discourse](https://github.com/discourse/discourse/) running on Heroku.
+# Daemo-Forum
+The Daemo-Forum is a custom installation of [Discourse](https://github.com/discourse/discourse/) running on Heroku.
 It works as:
 
 - a mailing list
@@ -30,7 +30,7 @@ Plus *lots* of Ruby Gems, a complete list of which is at [/master/Gemfile](/).
 
 1. If you're **brand new to Ruby and Rails**, please see [**our Vagrant Developer Section**](docs/VAGRANT.md), which includes a development environment in a virtual machine.
 
-2. If you're familiar with how Rails works and are comfortable setting up your own environment, use our [**Daemo-forum Advanced Developer Section**](docs/DEVELOPER-ADVANCED.md).
+2. If you're familiar with how Rails works and are comfortable setting up your own environment, use our [**Daemo-Forum Advanced Developer Section**](docs/DEVELOPER-ADVANCED.md).
 
 Before you get started, ensure you have the following minimum versions: [Ruby 2.0.0+](http://www.ruby-lang.org/en/downloads/), [PostgreSQL 9.3+](http://www.postgresql.org/download/), [Redis 2.6+](http://redis.io/download). If you're having trouble, please see our [**TROUBLESHOOTING GUIDE**](docs/TROUBLESHOOTING.md) first!
 
@@ -48,8 +48,8 @@ Before you get started, ensure you have the following minimum versions: [Ruby 2.
 Daemo-Forum is **100% free** and **open source**. We encourage and support an active, healthy community that
 accepts contributions from the public &ndash; including you!
 
-1. Fork daemo-forum and clone your forked repository on your system
-1. Make sure you have an `upstream` remote: `$ git remote add upstream https://github.com/crowdresearch/daemo-forum.git`
+1. Fork Daemo-Forum and clone your forked repository on your system
+1. Make sure you have an `upstream` remote: `$ git remote add upstream https://github.com/crowdresearch/Daemo-Forum.git`
 1. Merge the latest master from upstream: `$ git pull upstream master`
 1. Create a new branch out off master for your fix/feature. `git checkout new-feature master`
 1. Make your changes
