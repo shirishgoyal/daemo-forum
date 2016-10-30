@@ -1,19 +1,16 @@
-import loadScript from 'discourse/lib/load-script';
 import Quote from 'discourse/lib/quote';
 import computed from 'ember-addons/ember-computed-decorators';
+import { selectedText } from 'discourse/lib/utilities';
 
 export default Ember.Controller.extend({
-  needs: ['topic', 'composer'],
-
-  _loadSanitizer: function() {
-    loadScript('defer/html-sanitizer-bundle');
-  }.on('init'),
+  topic: Ember.inject.controller(),
+  composer: Ember.inject.controller(),
 
   @computed('buffer', 'postId')
   post(buffer, postId) {
     if (!postId || Ember.isEmpty(buffer)) { return null; }
 
-    const postStream = this.get('controllers.topic.model.postStream');
+    const postStream = this.get('topic.model.postStream');
     const post = postStream.findLoadedPost(postId);
 
     return post;
@@ -26,7 +23,7 @@ export default Ember.Controller.extend({
     if (!this.currentUser) return;
 
     // don't display the "quote-reply" button if we can't reply
-    const topicDetails = this.get('controllers.topic.model.details');
+    const topicDetails = this.get('topic.model.details');
     if (!(topicDetails.get('can_reply_as_new_topic') || topicDetails.get('can_create_post'))) {
       return;
     }
@@ -49,25 +46,32 @@ export default Ember.Controller.extend({
       return;
     }
 
-    const selectedText = Discourse.Utilities.selectedText();
-    if (this.get('buffer') === selectedText) return;
+    const selVal = selectedText();
+    if (this.get('buffer') === selVal) return;
 
     // we need to retrieve the post data from the posts collection in the topic controller
     this.set('postId', postId);
-    this.set('buffer', selectedText);
+    this.set('buffer', selVal);
 
     // create a marker element
     const markerElement = document.createElement("span");
     // containing a single invisible character
     markerElement.appendChild(document.createTextNode("\ufeff"));
 
+    const isMobileDevice = this.site.isMobileDevice;
+    const capabilities = this.capabilities,
+          isIOS = capabilities.isIOS,
+          isAndroid = capabilities.isAndroid;
+
     // collapse the range at the beginning/end of the selection
-    range.collapse(!Discourse.Mobile.isMobileDevice);
+    range.collapse(!isMobileDevice);
     // and insert it at the start of our selection range
     range.insertNode(markerElement);
 
     // retrieve the position of the marker
-    const markerOffset = $(markerElement).offset(),
+    const $markerElement = $(markerElement),
+          markerOffset = $markerElement.offset(),
+          parentScrollLeft = $markerElement.parent().scrollLeft(),
           $quoteButton = $('.quote-button');
 
     // remove the marker
@@ -83,7 +87,9 @@ export default Ember.Controller.extend({
       let topOff = markerOffset.top;
       let leftOff = markerOffset.left;
 
-      if (Discourse.Mobile.isMobileDevice) {
+      if (parentScrollLeft > 0) leftOff += parentScrollLeft;
+
+      if (isMobileDevice || isIOS || isAndroid) {
         topOff = topOff + 20;
         leftOff = Math.min(leftOff + 10, $(window).width() - $quoteButton.outerWidth());
       } else {
@@ -101,7 +107,7 @@ export default Ember.Controller.extend({
 
     // defer load if needed, if in an expanded replies section
     if (!post) {
-      const postStream = this.get('controllers.topic.model.postStream');
+      const postStream = this.get('topic.model.postStream');
       return postStream.loadPost(postId).then(p => {
         this.set('post', p);
         return this.quoteText();
@@ -109,12 +115,12 @@ export default Ember.Controller.extend({
     }
 
     // If we can't create a post, delegate to reply as new topic
-    if (!this.get('controllers.topic.model.details.can_create_post')) {
-      this.get('controllers.topic').send('replyAsNewTopic', post);
+    if (!this.get('topic.model.details.can_create_post')) {
+      this.get('topic').send('replyAsNewTopic', post);
       return;
     }
 
-    const composerController = this.get('controllers.composer');
+    const composerController = this.get('composer');
     const composerOpts = {
       action: Composer.REPLY,
       draftKey: post.get('topic.draft_key')
@@ -136,7 +142,7 @@ export default Ember.Controller.extend({
     const quotedText = Quote.build(post, buffer);
     composerOpts.quote = quotedText;
     if (composerController.get('content.viewOpen') || composerController.get('content.viewDraft')) {
-      this.appEvents.trigger('composer:insert-text', quotedText.trim());
+      this.appEvents.trigger('composer:insert-text', quotedText);
     } else {
       composerController.open(composerOpts);
     }

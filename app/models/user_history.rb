@@ -50,7 +50,13 @@ class UserHistory < ActiveRecord::Base
                           grant_admin: 32,
                           revoke_admin: 33,
                           grant_moderation: 34,
-                          revoke_moderation: 35)
+                          revoke_moderation: 35,
+                          backup_operation: 36,
+                          rate_limited_like: 37, # not used anymore
+                          revoke_email: 38,
+                          deactivate_user: 39,
+                          wizard_step: 40
+                         )
   end
 
   # Staff actions is a subset of all actions, used to audit actions taken by staff users.
@@ -82,7 +88,10 @@ class UserHistory < ActiveRecord::Base
                         :grant_admin,
                         :revoke_admin,
                         :grant_moderation,
-                        :revoke_moderation]
+                        :revoke_moderation,
+                        :backup_operation,
+                        :revoke_email,
+                        :deactivate_user]
   end
 
   def self.staff_action_ids
@@ -155,16 +164,16 @@ end
 #  details        :text
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
-#  context        :string(255)
-#  ip_address     :string(255)
-#  email          :string(255)
+#  context        :string
+#  ip_address     :string
+#  email          :string
 #  subject        :text
 #  previous_value :text
 #  new_value      :text
 #  topic_id       :integer
 #  admin_only     :boolean          default(FALSE)
 #  post_id        :integer
-#  custom_type    :string(255)
+#  custom_type    :string
 #  category_id    :integer
 #
 # Indexes

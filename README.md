@@ -12,9 +12,9 @@ Discourse is built for the *next* 10 years of the Internet, so our requirements 
 
 | Browsers | Tablets |  Smartphones |
 | -------- | ------- | ----------- |
-| Safari 5.1+| iPad 2+ |  iOS 7+ |
-| Google Chrome 23+ |  Android 4.1+ | Android 4.1+ |
-| Internet Explorer 10+ | Windows 8 | Windows Phone 8 |
+| Safari 6.1+| iPad 2+ |  iOS 7+ |
+| Google Chrome 23+ |  Android 4.3+ | Android 4.3+ |
+| Internet Explorer 11+ | Windows 8 | Windows Phone 8 |
 | Firefox 16+ | |
 
 ## Built With
@@ -44,6 +44,7 @@ Before you get started, ensure you have the following minimum versions: [Ruby 2.
 --to do--
 
 ## Contributing
+=======
 
 Daemo-Forum is **100% free** and **open source**. We encourage and support an active, healthy community that
 accepts contributions from the public &ndash; including you!
@@ -63,3 +64,5 @@ Most conflicts occur in a consistent set of files, namely `Gemfile` and the vari
 Once all conflicts are resolved, commit the changes: `$ git add . && git commit -m "Merge w/ upstream"`.
 
 We look forward to seeing your pull requests!
+
+Copyright 2014 - 2016 Civilized Discourse Construction Kit, Inc.

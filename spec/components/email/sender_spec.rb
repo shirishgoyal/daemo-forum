@@ -4,10 +4,23 @@ require 'email/sender'
 describe Email::Sender do
 
   it "doesn't deliver mail when mails are disabled" do
-    SiteSetting.expects(:disable_emails).returns(true)
+    SiteSetting.disable_emails = true
     Mail::Message.any_instance.expects(:deliver_now).never
     message = Mail::Message.new(to: "hello@world.com" , body: "hello")
-    Email::Sender.new(message, :hello).send
+    expect(Email::Sender.new(message, :hello).send).to eq(nil)
+  end
+
+  it "delivers mail when mails are disabled but the email_type is admin_login" do
+    SiteSetting.disable_emails = true
+    Mail::Message.any_instance.expects(:deliver_now).once
+    message = Mail::Message.new(to: "hello@world.com" , body: "hello")
+    Email::Sender.new(message, :admin_login).send
+  end
+
+  it "doesn't deliver mail when the message is of type NullMail" do
+    Mail::Message.any_instance.expects(:deliver_now).never
+    message = ActionMailer::Base::NullMail.new
+    expect(Email::Sender.new(message, :hello).send).to eq(nil)
   end
 
   it "doesn't deliver mail when the message is nil" do
@@ -64,6 +77,24 @@ describe Email::Sender do
       email_sender.send
     end
 
+    context "doesn't add return_path when no plus addressing" do
+      before { SiteSetting.reply_by_email_address = '%{reply_key}@test.com' }
+
+      When { email_sender.send }
+      Then {
+        expect(message.header[:return_path].to_s).to eq("")
+      }
+    end
+
+    context "adds return_path with plus addressing" do
+      before { SiteSetting.reply_by_email_address = 'replies+%{reply_key}@test.com' }
+
+      When { email_sender.send }
+      Then {
+        expect(message.header[:return_path].to_s).to eq("replies+verp-#{EmailLog.last.bounce_key}@test.com")
+      }
+    end
+
     context "adds a List-ID header to identify the forum" do
       before do
         category =  Fabricate(:category, name: 'Name With Space')
@@ -106,6 +137,26 @@ describe Email::Sender do
       Then { expect(message.header['X-Discourse-Topic-Id']).not_to be_present }
       Then { expect(message.header['X-Discourse-Post-Id']).not_to be_present }
       Then { expect(message.header['X-Discourse-Reply-Key']).not_to be_present }
+    end
+
+    context "merges custom mandrill header" do
+      before do
+        ActionMailer::Base.smtp_settings[:address] = "smtp.mandrillapp.com"
+        message.header['X-MC-Metadata'] = { foo: "bar" }.to_json
+      end
+
+      When { email_sender.send }
+      Then { expect(message.header['X-MC-Metadata'].to_s).to match(message.message_id) }
+    end
+
+    context "merges custom sparkpost header" do
+      before do
+        ActionMailer::Base.smtp_settings[:address] = "smtp.sparkpostmail.com"
+        message.header['X-MSYS-API'] = { foo: "bar" }.to_json
+      end
+
+      When { email_sender.send }
+      Then { expect(message.header['X-MSYS-API'].to_s).to match(message.message_id) }
     end
 
     context 'email logs' do

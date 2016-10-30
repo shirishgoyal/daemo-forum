@@ -1,8 +1,11 @@
 import DiscourseURL from 'discourse/lib/url';
 import { propertyNotEqual, setting } from 'discourse/lib/computed';
+import computed from 'ember-addons/ember-computed-decorators';
 
 export default Ember.Controller.extend({
-  needs: ['topic', 'application'],
+  topic: Ember.inject.controller(),
+  application: Ember.inject.controller(),
+
   visible: false,
   user: null,
   username: null,
@@ -14,10 +17,10 @@ export default Ember.Controller.extend({
   // If inside a topic
   topicPostCount: null,
 
-  postStream: Em.computed.alias('controllers.topic.model.postStream'),
+  postStream: Em.computed.alias('topic.model.postStream'),
   enoughPostsForFiltering: Em.computed.gte('topicPostCount', 2),
-  viewingTopic: Em.computed.match('controllers.application.currentPath', /^topic\./),
-  viewingAdmin: Em.computed.match('controllers.application.currentPath', /^admin\./),
+  viewingTopic: Em.computed.match('application.currentPath', /^topic\./),
+  viewingAdmin: Em.computed.match('application.currentPath', /^admin\./),
   showFilter: Em.computed.and('viewingTopic', 'postStream.hasNoFilters', 'enoughPostsForFiltering'),
   showName: propertyNotEqual('user.name', 'user.username'),
   hasUserFilters: Em.computed.gt('postStream.userFilters.length', 0),
@@ -25,10 +28,35 @@ export default Ember.Controller.extend({
   showBadges: setting('enable_badges'),
   showMoreBadges: Em.computed.gt('moreBadgesCount', 0),
   showDelete: Em.computed.and("viewingAdmin", "showName", "user.canBeDeleted"),
+  linkWebsite: Em.computed.not('user.isBasic'),
+  hasLocationOrWebsite: Em.computed.or('user.location', 'user.website_name'),
+
+  @computed('user.name')
+  nameFirst(name) {
+    return !this.get('siteSettings.prioritize_username_in_ux') && name && name.trim().length > 0;
+  },
+
+  @computed('user.user_fields.@each.value')
+  publicUserFields() {
+    const siteUserFields = this.site.get('user_fields');
+    if (!Ember.isEmpty(siteUserFields)) {
+      const userFields = this.get('user.user_fields');
+      return siteUserFields.filterBy('show_on_user_card', true).sortBy('position').map(field => {
+        Ember.set(field, 'dasherized_name', field.get('name').dasherize());
+        const value = userFields ? userFields[field.get('id')] : null;
+        return Ember.isEmpty(value) ? null : Ember.Object.create({ value, field });
+      }).compact();
+    }
+  },
+
+  @computed("user.trust_level")
+  removeNoFollow(trustLevel) {
+    return trustLevel > 2 && !this.siteSettings.tl3_links_no_follow;
+  },
 
   moreBadgesCount: function() {
     return this.get('user.badge_count') - this.get('user.featured_user_badges.length');
-  }.property('user.badge_count', 'user.featured_user_badges.@each'),
+  }.property('user.badge_count', 'user.featured_user_badges.[]'),
 
   hasCardBadgeImage: function() {
     const img = this.get('user.card_badge.image');
@@ -45,7 +73,7 @@ export default Ember.Controller.extend({
     }
 
     // Don't show on mobile
-    if (Discourse.Mobile.mobileView) {
+    if (this.site.mobileView) {
       const url = "/users/" + username;
       DiscourseURL.routeTo(url);
       return;
@@ -71,7 +99,7 @@ export default Ember.Controller.extend({
     this.setProperties({ username, userLoading: username, cardTarget: target, post });
 
     const args = { stats: false };
-    args.include_post_count_for = this.get('controllers.topic.model.id');
+    args.include_post_count_for = this.get('topic.model.id');
     args.skip_track_visit = true;
 
     return Discourse.User.findByUsername(username, args).then((user) => {

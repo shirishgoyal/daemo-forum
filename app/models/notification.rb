@@ -42,7 +42,8 @@ class Notification < ActiveRecord::Base
                         invited_to_topic: 13,
                         custom: 14,
                         group_mentioned: 15,
-                        group_message_summary: 16
+                        group_message_summary: 16,
+                        watching_first_post: 17
                        )
   end
 
@@ -57,6 +58,15 @@ class Notification < ActiveRecord::Base
     user.publish_notifications_state if count > 0
 
     count
+  end
+
+  def self.read(user, notification_ids)
+    count = Notification.where(user_id: user.id,
+                               id: notification_ids,
+                               read: false).update_all(read: true)
+    if count > 0
+      user.publish_notifications_state
+    end
   end
 
   def self.interesting_after(min_date)
@@ -98,18 +108,13 @@ class Notification < ActiveRecord::Base
   # Be wary of calling this frequently. O(n) JSON parsing can suck.
   def data_hash
     @data_hash ||= begin
-
       return nil if data.blank?
+
       parsed = JSON.parse(data)
       return nil if parsed.blank?
 
       parsed.with_indifferent_access
     end
-  end
-
-  def text_description
-    link = block_given? ? yield : ""
-    I18n.t("notification_types.#{Notification.types[notification_type]}", data_hash.merge(link: link))
   end
 
   def url
@@ -122,12 +127,19 @@ class Notification < ActiveRecord::Base
   end
 
   def self.recent_report(user, count = nil)
+    return unless user && user.user_option
+
     count ||= 10
     notifications = user.notifications
                         .visible
                         .recent(count)
                         .includes(:topic)
-                        .to_a
+
+    if user.user_option.like_notification_frequency == UserOption.like_notification_frequency_type[:never]
+      notifications = notifications.where('notification_type <> ?', Notification.types[:liked])
+    end
+
+    notifications = notifications.to_a
 
     if notifications.present?
 
@@ -203,5 +215,6 @@ end
 #  idx_notifications_speedup_unread_count                       (user_id,notification_type)
 #  index_notifications_on_post_action_id                        (post_action_id)
 #  index_notifications_on_user_id_and_created_at                (user_id,created_at)
+#  index_notifications_on_user_id_and_id                        (user_id,id) UNIQUE
 #  index_notifications_on_user_id_and_topic_id_and_post_number  (user_id,topic_id,post_number)
 #

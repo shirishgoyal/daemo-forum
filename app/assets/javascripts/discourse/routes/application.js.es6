@@ -1,13 +1,16 @@
+import { ajax } from 'discourse/lib/ajax';
 import { setting } from 'discourse/lib/computed';
 import logout from 'discourse/lib/logout';
 import showModal from 'discourse/lib/show-modal';
 import OpenComposer from "discourse/mixins/open-composer";
 import Category from 'discourse/models/category';
+import mobile from 'discourse/lib/mobile';
+import { findAll } from 'discourse/models/login-method';
 
-function unlessReadOnly(method) {
+function unlessReadOnly(method, message) {
   return function() {
     if (this.site.get("isReadOnly")) {
-      bootbox.alert(I18n.t("read_only_mode.login_disabled"));
+      bootbox.alert(message);
     } else {
       this[method]();
     }
@@ -18,12 +21,17 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
   siteTitle: setting('title'),
 
   actions: {
-
-    logout() {
-      if (this.currentUser) {
-        this.currentUser.destroySession().then(() => logout(this.siteSettings, this.keyValueStore));
-      }
+    toggleAnonymous() {
+      ajax("/users/toggle-anon", {method: 'POST'}).then(() => {
+        window.location.reload();
+      });
     },
+
+    toggleMobileView() {
+      mobile.toggleMobileView();
+    },
+
+    logout: unlessReadOnly('_handleLogout', I18n.t("read_only_mode.logout_disabled")),
 
     _collectTitleTokens(tokens) {
       tokens.push(this.get('siteTitle'));
@@ -36,12 +44,6 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
       Ember.run.once(router, router.trigger, 'willTransition');
       return this._super();
     },
-
-    // This is here as a bugfix for when an Ember Cloaked view triggers
-    // a scroll after a controller has been torn down. The real fix
-    // should be to fix ember cloaking to not do that, but this catches
-    // it safely just in case.
-    postChangedRoute: Ember.K,
 
     showTopicEntrance(data) {
       this.controllerFor('topic-entrance').send('show', data);
@@ -89,9 +91,9 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
       return true;
     },
 
-    showLogin: unlessReadOnly('handleShowLogin'),
+    showLogin: unlessReadOnly('handleShowLogin', I18n.t("read_only_mode.login_disabled")),
 
-    showCreateAccount: unlessReadOnly('handleShowCreateAccount'),
+    showCreateAccount: unlessReadOnly('handleShowCreateAccount', I18n.t("read_only_mode.login_disabled")),
 
     showForgotPassword() {
       showModal('forgotPassword', { title: 'forgot_password.title' });
@@ -153,8 +155,8 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
       this.render(w, {into: 'modal/topic-bulk-actions', outlet: 'bulkOutlet', controller: factory ? controllerName : 'topic-bulk-actions'});
     },
 
-    createNewTopicViaParams(title, body, category_id, category) {
-      this.openComposerWithTopicParams(this.controllerFor('discovery/topics'), title, body, category_id, category);
+    createNewTopicViaParams(title, body, category_id, category, tags) {
+      this.openComposerWithTopicParams(this.controllerFor('discovery/topics'), title, body, category_id, category, tags);
     },
 
     createNewMessageViaParams(username, title, body) {
@@ -168,6 +170,14 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
       // Support for callbacks once the application has activated
       ApplicationRoute.trigger('activate');
     });
+  },
+
+  renderTemplate() {
+    this.render('application');
+    this.render('user-card', { into: 'application', outlet: 'user-card' });
+    this.render('modal', { into: 'application', outlet: 'modal' });
+    this.render('topic-entrance', { into: 'application', outlet: 'topic-entrance' });
+    this.render('composer', { into: 'application', outlet: 'composer' });
   },
 
   handleShowLogin() {
@@ -189,7 +199,10 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
   },
 
   _autoLogin(modal, modalClass, notAuto) {
-    const methods = Em.get('Discourse.LoginMethod.all');
+    const methods = findAll(this.siteSettings,
+                            this.container.lookup('capabilities:main'),
+                            this.site.isMobileDevice);
+
     if (!this.siteSettings.enable_local_logins && methods.length === 1) {
       this.controllerFor('login').send('externalLogin', methods[0]);
     } else {
@@ -199,6 +212,11 @@ const ApplicationRoute = Discourse.Route.extend(OpenComposer, {
     }
   },
 
+  _handleLogout() {
+    if (this.currentUser) {
+      this.currentUser.destroySession().then(() => logout(this.siteSettings, this.keyValueStore));
+    }
+  },
 });
 
 RSVP.EventTarget.mixin(ApplicationRoute);
