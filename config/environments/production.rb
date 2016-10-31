@@ -43,6 +43,18 @@ Discourse::Application.configure do
     config.action_mailer.sendmail_settings = {arguments: '-i'}
   end
 
+  ActionMailer::Base.smtp_settings = {
+    :address        => 'smtp.sendgrid.net',
+    :port           => '587',
+    :authentication => :plain,
+    :user_name      => ENV['SENDGRID_USERNAME'],
+    :password       => ENV['SENDGRID_PASSWORD'],
+    :domain         => 'herokuapp.com',
+    :enable_starttls_auto => true
+  }
+
+  config.action_mailer.delivery_method = :smtp
+
   # Send deprecation notices to registered listeners
   config.active_support.deprecation = :notify
 
