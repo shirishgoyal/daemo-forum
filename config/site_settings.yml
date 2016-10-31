@@ -28,13 +28,13 @@ required:
     default: ''
   contact_email:
     client: true
-    default: ''
+    default: 'crowdresearch@cs.stanford.edu'
     type: email
   contact_url:
     client: true
     default: ''
   notification_email:
-    default: 'noreply@unconfigured.discourse.org'
+    default: 'crowdresearch@cs.stanford.edu'
     type: email
     shadowed_by_global: true
   site_contact_username:
@@ -47,23 +47,23 @@ required:
     client: true
     default: '/images/d-logo-sketch-small.png'
   digest_logo_url:
-    default: ''
+    default: '/images/d-logo-sketch.png'
   mobile_logo_url:
     client: true
-    default: ''
+    default: '/images/d-logo-sketch.png'
   favicon_url:
     client: true
     default: '/images/default-favicon.ico'
   apple_touch_icon_url: '/images/default-apple-touch-icon.png'
   default_opengraph_image_url: ''
-  twitter_summary_large_image_url: ''
+  twitter_summary_large_image_url: '/images/d-logo-sketch.png'
   exclude_rel_nofollow_domains:
     default: ''
     type: list
   company_short_name:
-    default: ''
+    default: 'Stanford HCI'
   company_full_name:
-    default: ''
+    default: 'Stanford HCI'
   company_domain:
     default: ''
 
