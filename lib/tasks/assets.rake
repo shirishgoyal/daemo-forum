@@ -6,6 +6,9 @@ task 'assets:precompile:before' do
     raise "rake assets:precompile should only be run in RAILS_ENV=production, you are risking unminified assets"
   end
 
+  puts "Ensure migrations are run before compiling"
+  Rake::Task['db:migrate'].invoke
+
   # Ensure we ALWAYS do a clean build
   # We use many .erbs that get out of date quickly, especially with plugins
   puts "Purging temp files"
