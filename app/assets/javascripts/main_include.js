@@ -2,6 +2,7 @@
 //= require ./ember-addons/decorator-alias
 //= require ./ember-addons/macro-alias
 //= require ./ember-addons/ember-computed-decorators
+//= require ./ember-addons/fmt
 //= require_tree ./discourse-common
 //= require ./discourse
 //= require ./deprecated
@@ -23,6 +24,7 @@
 //= require ./discourse/lib/computed
 //= require ./discourse/lib/formatter
 //= require ./discourse/lib/eyeline
+//= require ./discourse/mixins/scrolling
 //= require ./discourse/mixins/scrolling
 //= require ./discourse/models/model
 //= require ./discourse/models/rest

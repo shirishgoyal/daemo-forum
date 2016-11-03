@@ -124,6 +124,7 @@ end
 group :test do
   gem 'fakeweb', '~> 1.3.0', require: false
   gem 'minitest', require: false
+  gem 'timecop'
 end
 
 group :test, :development do
@@ -140,7 +141,6 @@ group :test, :development do
   gem 'rspec-rails', require: false
   gem 'shoulda', require: false
   gem 'simplecov', require: false
-  gem 'timecop'
   gem 'rspec-given'
   gem 'rspec-html-matchers'
   gem 'spork-rails'
