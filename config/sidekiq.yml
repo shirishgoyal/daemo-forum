@@ -1,4 +1,6 @@
-:concurrency: 2
-:queues:
-  - default
-  - mailers
+---
+development:
+  :queues:
+    - [critical,4]
+    - [default, 2]
+    - [low]
