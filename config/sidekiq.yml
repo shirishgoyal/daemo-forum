@@ -1,6 +1,5 @@
----
-development:
-  :queues:
-    - [critical,4]
-    - [default, 2]
-    - [low]
+:concurrency: 2
+:queues:
+  - [critical,4]
+  - [default, 2]
+  - [low]
